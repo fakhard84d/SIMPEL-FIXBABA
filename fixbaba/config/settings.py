@@ -50,7 +50,7 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': BASE_DIR / 'templates',
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -66,16 +66,30 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 
 # Database
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('POSTGRES_DB', 'fixbaba_db'),
-        'USER': os.getenv('POSTGRES_USER', 'fixbaba_user'),
-        'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'fixbaba_password'),
-        'HOST': os.getenv('POSTGRES_HOST', 'db'),
-        'PORT': os.getenv('POSTGRES_PORT', '5432'),
+DATABASE_URL = os.getenv('DATABASE_URL', '')
+
+if DATABASE_URL.startswith('sqlite'):
+    # SQLite for development
+    import re
+    db_path = DATABASE_URL.replace('sqlite:///', '')
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / db_path if db_path else BASE_DIR / 'db.sqlite3',
+        }
     }
-}
+else:
+    # PostgreSQL for production
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.getenv('POSTGRES_DB', 'fixbaba_db'),
+            'USER': os.getenv('POSTGRES_USER', 'fixbaba_user'),
+            'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'fixbaba_password'),
+            'HOST': os.getenv('POSTGRES_HOST', 'localhost'),
+            'PORT': os.getenv('POSTGRES_PORT', '5432'),
+        }
+    }
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -135,6 +149,7 @@ SESSION_COOKIE_AGE = int(os.getenv('DEVICE_SESSION_DAYS', '90')) * 24 * 60 * 60
 MAGIC_LINK_EXPIRATION_MINUTES = int(os.getenv('MAGIC_LINK_EXPIRATION_MINUTES', '10080'))
 MAGIC_LINK_MAX_ACTIVATIONS = int(os.getenv('MAGIC_LINK_MAX_ACTIVATIONS', '5'))
 SERVER_PEPPER = os.getenv('SERVER_PEPPER', 'default-pepper-change-me')
+DEVICE_SESSION_DAYS = int(os.getenv('DEVICE_SESSION_DAYS', '90'))
 
 # File Upload Settings
 MAX_UPLOAD_SIZE_MB = int(os.getenv('MAX_UPLOAD_SIZE_MB', '5'))
