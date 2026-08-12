@@ -1,1 +1,52 @@
-Nothing should be ignored in this case, as the changes only include Python source files (.py) which are legitimate code files that should be tracked in version control. No build artifacts, dependencies, or temporary files are present in the change list.
+```
+# Logs
+*.log
+
+# Static files build output
+fixbaba/staticfiles/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+.ENV
+.ENV.local
+*.env
+*.env.local
+*.env.*
+
+# Django
+*.sqlite3
+*.pot
+*.po
+*.mo
+*.log
+local_settings.py
+db.sqlite3
+media/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Coverage reports
+coverage/
+htmlcov/
+.coverage
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+```
