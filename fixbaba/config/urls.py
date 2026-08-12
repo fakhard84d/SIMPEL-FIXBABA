@@ -36,7 +36,7 @@ if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
 # Custom error handlers
-handler404 = 'apps.dashboard.views.error_404'
-handler500 = 'apps.dashboard.views.error_500'
-handler403 = 'apps.dashboard.views.error_403'
-handler401 = 'apps.dashboard.views.error_401'
+handler404 = 'apps.dashboard.views_errors.error_404'
+handler500 = 'apps.dashboard.views_errors.error_500'
+handler403 = 'apps.dashboard.views_errors.error_403'
+handler401 = 'apps.dashboard.views_errors.error_401'

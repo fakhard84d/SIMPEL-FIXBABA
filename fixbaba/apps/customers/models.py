@@ -132,7 +132,6 @@ class MagicLink(models.Model):
         return raw_token, magic_link
     
     @classmethod
-    @transaction.atomic(select_for_update=True)
     def validate_and_activate(cls, token: str, device_credential: str = None) -> dict:
         """
         Validate token and handle activation with race condition protection.
@@ -141,63 +140,64 @@ class MagicLink(models.Model):
         token_hash = cls.hash_token(token)
         now = timezone.now()
         
-        try:
-            magic_link = cls.objects.select_for_update().get(token_hash=token_hash)
-        except cls.DoesNotExist:
-            return {'success': False, 'error': 'invalid_token'}
-        
-        # Check revocation
-        if magic_link.revoked_at:
-            return {'success': False, 'error': 'revoked'}
-        
-        # Check expiration
-        if magic_link.expires_at < now:
-            magic_link.status = 'EXPIRED'
-            magic_link.save(update_fields=['status'])
-            return {'success': False, 'error': 'expired'}
-        
-        # Check if already exhausted
-        if magic_link.status == 'EXHAUSTED':
-            return {'success': False, 'error': 'exhausted'}
-        
-        # Check if device already has a session
-        if device_credential:
-            existing_device = CustomerDevice.objects.filter(
-                customer=magic_link.customer,
-                is_active=True,
-                revoked_at__isnull=True
-            ).filter(
-                models.Q(expires_at__isnull=True) | models.Q(expires_at__gt=now)
-            ).first()
+        with transaction.atomic():
+            try:
+                magic_link = cls.objects.select_for_update().get(token_hash=token_hash)
+            except cls.DoesNotExist:
+                return {'success': False, 'error': 'invalid_token'}
             
-            if existing_device:
-                # Existing device - don't consume quota
-                magic_link.last_used_at = now
-                magic_link.save(update_fields=['last_used_at'])
-                return {
-                    'success': True,
-                    'customer': magic_link.customer,
-                    'device': existing_device,
-                    'is_existing_device': True
-                }
-        
-        # New device - check quota
-        if magic_link.successful_activations >= magic_link.max_activations:
-            magic_link.status = 'EXHAUSTED'
-            magic_link.save(update_fields=['status'])
-            return {'success': False, 'error': 'exhausted'}
-        
-        # Activate new device
-        magic_link.successful_activations += 1
-        magic_link.last_used_at = now
-        
-        if magic_link.successful_activations >= magic_link.max_activations:
-            magic_link.status = 'EXHAUSTED'
-        
-        magic_link.save(update_fields=['successful_activations', 'last_used_at', 'status'])
-        
-        # Create device session
-        device = CustomerDevice.create_for_customer(magic_link.customer, device_credential)
+            # Check revocation
+            if magic_link.revoked_at:
+                return {'success': False, 'error': 'revoked'}
+            
+            # Check expiration
+            if magic_link.expires_at < now:
+                magic_link.status = 'EXPIRED'
+                magic_link.save(update_fields=['status'])
+                return {'success': False, 'error': 'expired'}
+            
+            # Check if already exhausted
+            if magic_link.status == 'EXHAUSTED':
+                return {'success': False, 'error': 'exhausted'}
+            
+            # Check if device already has a session
+            if device_credential:
+                existing_device = CustomerDevice.objects.filter(
+                    customer=magic_link.customer,
+                    is_active=True,
+                    revoked_at__isnull=True
+                ).filter(
+                    models.Q(expires_at__isnull=True) | models.Q(expires_at__gt=now)
+                ).first()
+                
+                if existing_device:
+                    # Existing device - don't consume quota
+                    magic_link.last_used_at = now
+                    magic_link.save(update_fields=['last_used_at'])
+                    return {
+                        'success': True,
+                        'customer': magic_link.customer,
+                        'device': existing_device,
+                        'is_existing_device': True
+                    }
+            
+            # New device - check quota
+            if magic_link.successful_activations >= magic_link.max_activations:
+                magic_link.status = 'EXHAUSTED'
+                magic_link.save(update_fields=['status'])
+                return {'success': False, 'error': 'exhausted'}
+            
+            # Activate new device
+            magic_link.successful_activations += 1
+            magic_link.last_used_at = now
+            
+            if magic_link.successful_activations >= magic_link.max_activations:
+                magic_link.status = 'EXHAUSTED'
+            
+            magic_link.save(update_fields=['successful_activations', 'last_used_at', 'status'])
+            
+            # Create device session
+            device = CustomerDevice.create_for_customer(magic_link.customer, device_credential)
         
         return {
             'success': True,

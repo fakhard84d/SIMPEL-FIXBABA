@@ -20,13 +20,7 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-
-# Virtual Environment
-venv/
-ENV/
-env/
-.venv/
-.env/
+MANIFEST
 
 # Django
 *.log
@@ -37,23 +31,20 @@ media/
 staticfiles/
 .env
 
-# IDE
+# IDEs
 .vscode/
 .idea/
-*.swp
-*.swo
-*.tmp
 
 # OS
 .DS_Store
 Thumbs.db
 
-# Logs
-*.log
-
 # Coverage
 .coverage
 htmlcov/
 .coverage.*
+.cov.xml
 coverage.xml
+*.cover
+.hypothesis/
 ```
