@@ -1,0 +1,86 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ page_title }} - FixBaba</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <meta name="robots" content="noindex, nofollow">
+</head>
+<body>
+    <!-- Portal Header -->
+    <header class="portal-header">
+        <div class="container portal-header-content">
+            <div class="logo">FixBaba</div>
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <span>{{ customer.get_full_name }}</span>
+                <nav class="portal-nav">
+                    <a href="{% url 'customers:portal_dashboard' %}">خانه</a>
+                    <a href="{% url 'service_requests:request_list' %}">درخواست‌های من</a>
+                    <a href="{% url 'service_requests:request_create' %}">ثبت درخواست جدید</a>
+                    <a href="{% url 'customers:portal_profile' %}">پروفایل</a>
+                    <a href="{% url 'customers:portal_logout' %}" style="color: #fca5a5;">خروج</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Welcome Section -->
+    <section class="welcome-section">
+        <div class="container">
+            <h2>سلام {{ customer.first_name }} 👋</h2>
+            <p>درخواست تعمیر یا سرویس لوازم خانگی خود را در کمتر از چند دقیقه ثبت کنید.</p>
+            
+            <div class="cta-section">
+                <a href="{% url 'service_requests:request_create' %}" class="btn btn-primary" style="font-size: 1.125rem; padding: 1rem 3rem;">
+                    ثبت درخواست تعمیر
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Recent Requests -->
+    <section class="container">
+        <div class="card">
+            <div class="card-header">
+                <h3>درخواست‌های اخیر</h3>
+                <a href="{% url 'service_requests:request_list' %}" class="btn btn-sm btn-secondary">مشاهده همه</a>
+            </div>
+            
+            {% if recent_requests %}
+                {% for req in recent_requests %}
+                <a href="{% url 'service_requests:request_detail' req.id %}" class="request-card">
+                    <div class="request-header">
+                        <span class="request-tracking">{{ req.tracking_code }}</span>
+                        <span class="status-badge status-{{ req.status|lower }}">{{ req.get_status_display }}</span>
+                    </div>
+                    <div class="request-appliance">{{ req.get_appliance_type_display }}</div>
+                    <div style="margin-top: 0.5rem; color: var(--muted-gray-blue); font-size: 0.875rem;">
+                        {{ req.created_at|date:"Y/n/j" }}
+                    </div>
+                </a>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-state-icon">📦</div>
+                    <p>هنوز درخواستی ثبت نکرده‌اید.</p>
+                    <a href="{% url 'service_requests:request_create' %}" class="btn btn-primary" style="margin-top: 1rem;">
+                        ثبت اولین درخواست
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; ۱۴۰۳ FixBaba - تمامی حقوق محفوظ است.</p>
+        </div>
+    </footer>
+</body>
+</html>
