@@ -1,0 +1,165 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ page_title }} - FixBaba</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <meta name="robots" content="noindex, nofollow">
+</head>
+<body>
+    <!-- Portal Header -->
+    <header class="portal-header">
+        <div class="container portal-header-content">
+            <div class="logo">FixBaba</div>
+            <nav class="portal-nav">
+                <a href="{% url 'customers:portal_dashboard' %}">خانه</a>
+                <a href="{% url 'service_requests:request_list' %}">درخواست‌های من</a>
+                <a href="{% url 'customers:portal_logout' %}" style="color: #fca5a5;">خروج</a>
+            </nav>
+        </div>
+    </header>
+
+    <section class="container" style="padding: 3rem 0; max-width: 700px;">
+        {% if error %}
+        <div class="card" style="border-right: 4px solid var(--danger); background: #FEF2F2;">
+            <p style="color: var(--danger);">{{ error }}</p>
+        </div>
+        {% endif %}
+
+        <div class="card">
+            <h2 style="margin-bottom: 2rem; text-align: center;">ثبت درخواست تعمیر جدید</h2>
+            
+            <form method="post" enctype="multipart/form-data" id="requestForm">
+                {% csrf_token %}
+                
+                <!-- Step 1: Appliance Type -->
+                <div class="form-group">
+                    <label class="form-label">چه وسیله‌ای نیاز به تعمیر دارد؟ *</label>
+                    <select name="appliance_type" class="form-select" required>
+                        <option value="">انتخاب کنید...</option>
+                        {% for value, label in appliance_choices %}
+                        <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Step 2: Brand & Model -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label class="form-label">برند (اختیاری)</label>
+                        <input type="text" name="brand" class="form-input" placeholder="مثلاً سامسونگ">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">مدل (اختیاری)</label>
+                        <input type="text" name="model" class="form-input" placeholder="مثلاً RF28R">
+                    </div>
+                </div>
+
+                <!-- Step 3: Description -->
+                <div class="form-group">
+                    <label class="form-label">شرح مشکل چیست؟ *</label>
+                    <textarea name="description" class="form-textarea" placeholder="مثلاً هود روشن می‌شود ولی مکش ندارد." required></textarea>
+                </div>
+
+                <!-- Step 4: Images -->
+                <div class="form-group">
+                    <label class="form-label">عکس دستگاه را اضافه کنید (حداکثر {{ max_images }} عکس)</label>
+                    <div class="file-upload-area" id="dropZone">
+                        <input type="file" name="images" id="fileInput" multiple accept="image/*" style="display: none;">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">📷</div>
+                        <p>برای انتخاب عکس کلیک کنید یا عکس را اینجا بکشید</p>
+                        <p style="font-size: 0.875rem; color: var(--muted-gray-blue); margin-top: 0.5rem;">
+                            حداکثر حجم هر عکس: {{ max_size_mb }} مگابایت
+                        </p>
+                    </div>
+                    <div class="image-preview-grid" id="previewGrid"></div>
+                </div>
+
+                <div style="margin-top: 2rem; text-align: center;">
+                    <button type="submit" class="btn btn-primary" style="width: 100%; padding: 1rem;">
+                        ثبت درخواست
+                    </button>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; ۱۴۰۳ FixBaba - تمامی حقوق محفوظ است.</p>
+        </div>
+    </footer>
+
+    <script>
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const previewGrid = document.getElementById('previewGrid');
+        const maxImages = {{ max_images }};
+        let selectedFiles = [];
+
+        dropZone.addEventListener('click', () => fileInput.click());
+        
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+
+        function handleFiles(files) {
+            for (let file of files) {
+                if (selectedFiles.length >= maxImages) break;
+                if (!file.type.startsWith('image/')) continue;
+                if (file.size > {{ max_size_mb|add:"0" }} * 1024 * 1024) continue;
+                
+                selectedFiles.push(file);
+                showPreview(file);
+            }
+        }
+
+        function showPreview(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const div = document.createElement('div');
+                div.className = 'image-preview-item';
+                div.innerHTML = `
+                    <img src="${e.target.result}" alt="preview">
+                    <button type="button" class="image-remove-btn" onclick="removeImage(this, '${file.name}')">×</button>
+                `;
+                previewGrid.appendChild(div);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function removeImage(btn, filename) {
+            selectedFiles = selectedFiles.filter(f => f.name !== filename);
+            btn.parentElement.remove();
+        }
+
+        document.getElementById('requestForm').addEventListener('submit', (e) => {
+            if (selectedFiles.length === 0) return;
+            
+            const dt = new DataTransfer();
+            selectedFiles.forEach(file => dt.items.add(file));
+            fileInput.files = dt.files;
+        });
+    </script>
+</body>
+</html>

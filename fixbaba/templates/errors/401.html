@@ -1,0 +1,21 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title|default:"دسترسی غیرمجاز" }} - FixBaba</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body style="display: flex; align-items: center; justify-content: center; min-height: 100vh; background: linear-gradient(135deg, var(--primary-dark), var(--deep-navy));">
+    <div class="container" style="text-align: center; color: var(--white); max-width: 500px;">
+        <div style="font-size: 5rem; margin-bottom: 1rem;">🔒</div>
+        <h1 style="font-size: 2rem; margin-bottom: 1rem;">{{ title|default:"دسترسی غیرمجاز" }}</h1>
+        <p style="opacity: 0.9; margin-bottom: 2rem;">{{ message|default:"شما مجوز دسترسی به این صفحه را ندارید." }}</p>
+        <a href="/" class="btn btn-primary">{{ action_text|default:"بازگشت به صفحه اصلی" }}</a>
+    </div>
+</body>
+</html>
